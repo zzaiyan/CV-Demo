@@ -1,8 +1,9 @@
 #include "ImgOps.h"
 #include <QList>
 #include <algorithm>
+#include <array>
 
-ImgOps::ImgOps() {}
+// ImgOps::ImgOps() {}
 
 QImage ImgOps::path2image(QString path) {
   QImage image(path);
@@ -185,13 +186,72 @@ QImage ImgOps::minFilter(const QImage &image, int kernel_size) {
   return filteredImage;
 }
 
-QImage ImgOps::edgeDetection(const QImage &image, int unused) {
+// QImage ImgOps::edgeDetection(const QImage &image, int unused) {
+//   // Convert QImage to grayscale
+//   QImage grayImage = image.convertToFormat(QImage::Format_Grayscale8);
+//   // QImage grayImage = image;
+//   qInfo() << grayImage.size();
+
+//   // Apply Sobel operator for horizontal and vertical edges
+//   QImage edgesImage = grayImage;
+//   qInfo() << "convertToFormat";
+
+//   int width = edgesImage.width();
+//   int height = edgesImage.height();
+
+//   for (int y = 1; y < height - 1; ++y) {
+//     qInfo() << QString("y = %1").arg(y);
+//     for (int x = 1; x < width - 1; ++x) {
+//       // Apply the Sobel operator
+//       int gx = (qGray(edgesImage.pixel(x + 1, y - 1)) +
+//                 2 * qGray(edgesImage.pixel(x + 1, y)) +
+//                 qGray(edgesImage.pixel(x + 1, y + 1))) -
+//                (qGray(edgesImage.pixel(x - 1, y - 1)) +
+//                 2 * qGray(edgesImage.pixel(x - 1, y)) +
+//                 qGray(edgesImage.pixel(x - 1, y + 1)));
+
+//       int gy = (qGray(edgesImage.pixel(x - 1, y + 1)) +
+//                 2 * qGray(edgesImage.pixel(x, y + 1)) +
+//                 qGray(edgesImage.pixel(x + 1, y + 1))) -
+//                (qGray(edgesImage.pixel(x - 1, y - 1)) +
+//                 2 * qGray(edgesImage.pixel(x, y - 1)) +
+//                 qGray(edgesImage.pixel(x + 1, y - 1)));
+
+//       int magnitude = qBound(0, qAbs(gx) + qAbs(gy), 255);
+
+//       edgesImage.setPixel(x, y, qRgb(magnitude, magnitude, magnitude));
+//     }
+//   }
+
+//   // Convert back to RGB for display
+//   QImage outputImage = edgesImage.convertToFormat(QImage::Format_RGB888);
+
+//   return outputImage;
+// }
+
+QImage ImgOps::edgeDetection(const QImage &image, int mode) {
   QImage edgeImage(image.size(), image.format());
 
-  // 定义Sobel算子
-  int sobelX[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+  using Kernel = std::array<std::array<int, 3>, 3>;
 
-  int sobelY[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+  Kernel kernelX, kernelY;
+  // 定义Prewitt算子
+  Kernel prewittX = {std::array<int, 3>{-1, 0, 1}, {-1, 0, 1}, {-1, 0, 1}};
+  Kernel prewittY = {std::array<int, 3>{-1, -1, -1}, {0, 0, 0}, {1, 1, 1}};
+  // 定义Sobel算子
+  Kernel sobelX = {std::array<int, 3>{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+  Kernel sobelY = {std::array<int, 3>{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+
+  qDebug() << "mode = " << mode;
+  if (mode == 0) {
+    qDebug() << "Prewitt";
+    kernelX = prewittX;
+    kernelY = prewittY;
+  } else if (mode == 1) {
+    qDebug() << "Sobel";
+    kernelX = sobelX;
+    kernelY = sobelY;
+  }
 
   for (int y = 1; y < image.height() - 1; ++y) {
     for (int x = 1; x < image.width() - 1; ++x) {
@@ -212,13 +272,13 @@ QImage ImgOps::edgeDetection(const QImage &image, int unused) {
           int neighborGreen = qGreen(neighborPixel);
           int neighborBlue = qBlue(neighborPixel);
 
-          gxRed += sobelX[j + 1][i + 1] * neighborRed;
-          gxGreen += sobelX[j + 1][i + 1] * neighborGreen;
-          gxBlue += sobelX[j + 1][i + 1] * neighborBlue;
+          gxRed += kernelX[j + 1][i + 1] * neighborRed;
+          gxGreen += kernelX[j + 1][i + 1] * neighborGreen;
+          gxBlue += kernelX[j + 1][i + 1] * neighborBlue;
 
-          gyRed += sobelY[j + 1][i + 1] * neighborRed;
-          gyGreen += sobelY[j + 1][i + 1] * neighborGreen;
-          gyBlue += sobelY[j + 1][i + 1] * neighborBlue;
+          gyRed += kernelY[j + 1][i + 1] * neighborRed;
+          gyGreen += kernelY[j + 1][i + 1] * neighborGreen;
+          gyBlue += kernelY[j + 1][i + 1] * neighborBlue;
         }
       }
 

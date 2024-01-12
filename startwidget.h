@@ -42,7 +42,8 @@ private:
   Ui::StartWidget *ui = new Ui::StartWidget;
   ImgOps ops;
   QImage rawImage, imageA, imageB;
-  std::vector<ImgOps::FilterType> transList{ops.meanFilter, ops.medianFilter,
-                                            ops.maxFilter, ops.minFilter};
+  std::vector<ImgOps::FilterType> transList{
+      ops.meanFilter, ops.medianFilter,  ops.maxFilter,
+      ops.minFilter,  ops.edgeDetection, ops.edgeDetection};
 };
 #endif // STARTWIDGET_H

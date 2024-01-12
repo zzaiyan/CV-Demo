@@ -1,3 +1,9 @@
+#ifdef Q_OS_WIN
+#define DEFAULT_IMAGE_PATH "C:\\Users\\1\\Desktop\\template.png"
+#else
+#define DEFAULT_IMAGE_PATH "/run/media/z/System/Users/1/Desktop/template.png"
+#endif
+
 #include "startwidget.h"
 
 #include <QFileDialog>
@@ -11,7 +17,7 @@ StartWidget::StartWidget(QWidget *parent) : QWidget(parent) {
   ui->labelA->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   ui->labelB->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
-  QString imagePath = "C:\\Users\\1\\Desktop\\template.png";
+  QString imagePath = DEFAULT_IMAGE_PATH;
   this->rawImage = ops.path2image(imagePath);
   this->imageA = rawImage;
   updatePanel(imagePath);
@@ -20,9 +26,7 @@ StartWidget::StartWidget(QWidget *parent) : QWidget(parent) {
   applyTrans(this->imageB);
   qInfo() << "File transformed.";
 
-  this->resize(QSize(this->height() + 1, this->width() + 1));
-  this->resize(QSize(this->height() - 1, this->width() - 1));
-
+  this->show();
   this->setA(this->imageA);
   this->setB(this->imageB);
 }
@@ -39,7 +43,13 @@ void StartWidget::updatePanel(const QString &path) {
 void StartWidget::applyTrans(QImage &inputImage) {
   int kernelSize = ui->kernelSizeBox->value();
   int repeatTime = ui->repeatTimeBox->value();
-  auto trans = transList.at(ui->comboBox->currentIndex());
+  int select = ui->comboBox->currentIndex();
+  if (select >= 4) {
+    // 前4种为滤波器，后2种为边缘检测
+    // 模4: 4->0, 5->1
+    kernelSize = select % 4;
+  }
+  auto trans = transList.at(select);
   while (repeatTime--) {
     this->imageB = trans(inputImage, kernelSize);
   }
