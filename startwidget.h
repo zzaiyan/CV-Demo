@@ -29,7 +29,7 @@ private:
   // 转换函数
   void applyTrans(QImage &inputImage);
   // UI更新
-  void updatePanel(const QString &path);
+  void updatePanel(QString path = "");
 
 private slots:
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -37,6 +37,8 @@ private slots:
   void on_buttonOpenFile_clicked();
   void on_buttonApply_clicked();
   void on_buttonReset_clicked();
+  void on_buttonStdNoise_clicked();
+  void on_buttonSAPNoise_clicked();
 
 private:
   Ui::StartWidget *ui = new Ui::StartWidget;

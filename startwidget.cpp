@@ -1,15 +1,15 @@
-#ifdef Q_OS_WIN
-#define DEFAULT_IMAGE_PATH "C:\\Users\\1\\Desktop\\template.png"
-#else
-#define DEFAULT_IMAGE_PATH "/run/media/z/System/Users/1/Desktop/template.png"
-#endif
-
 #include "startwidget.h"
 
 #include <QFileDialog>
 #include <QImage>
 #include <QPixmap>
 #include <QtWidgets>
+
+#ifdef Q_OS_WIN
+#define DEFAULT_IMAGE_PATH "C:\\Users\\1\\Desktop\\template.png"
+#else
+#define DEFAULT_IMAGE_PATH "/run/media/z/System/Users/1/Desktop/template.png"
+#endif
 
 StartWidget::StartWidget(QWidget *parent) : QWidget(parent) {
   ui->setupUi(this);
@@ -31,13 +31,21 @@ StartWidget::StartWidget(QWidget *parent) : QWidget(parent) {
   this->setB(this->imageB);
 }
 
-void StartWidget::updatePanel(const QString &path) {
-  ui->filenameEdit->setText(path);
-  QString text = QString("Resolution: (%1, %2)")
-                     .arg(this->rawImage.height())
-                     .arg(this->rawImage.width());
-  qInfo() << text;
-  ui->labelResolution->setText(text);
+void StartWidget::updatePanel(QString path) {
+  if (path != "") {
+    ui->filenameEdit->setText(path);
+    QString resol = QString("Resolution: (%1, %2)")
+                        .arg(this->rawImage.height())
+                        .arg(this->rawImage.width());
+    qDebug() << resol;
+    ui->labelResolution->setText(resol);
+  }
+  double psnr = ops.calcPSNR(this->rawImage, this->imageB);
+  double ssim = ops.calcSSIM(this->rawImage, this->imageB);
+  QString metric =
+      QString("PSNR: %1, SSIM: %2").arg(psnr, 0, 'f', 2).arg(ssim, 0, 'f', 4);
+  qDebug() << metric;
+  ui->labelMetric->setText(metric);
 }
 
 void StartWidget::applyTrans(QImage &inputImage) {
@@ -53,6 +61,7 @@ void StartWidget::applyTrans(QImage &inputImage) {
   while (repeatTime--) {
     this->imageB = trans(inputImage, kernelSize);
   }
+  updatePanel();
 }
 
 void StartWidget::on_buttonApply_clicked() {
@@ -108,4 +117,23 @@ void StartWidget::on_buttonReset_clicked() {
   this->imageA = this->imageB = this->rawImage;
   this->setA(this->imageA);
   this->setB(this->imageB);
+  updatePanel();
+}
+
+void StartWidget::on_buttonStdNoise_clicked() {
+  double std = ui->noiseStd->value();
+  QImage noiseImage = ops.addStdNoise(this->imageA, 0., std);
+  this->imageA = this->imageB = noiseImage;
+  this->setA(this->imageA);
+  this->setB(this->imageB);
+  updatePanel();
+}
+
+void StartWidget::on_buttonSAPNoise_clicked() {
+  double cover = ui->noiseRatio->value();
+  QImage noiseImage = ops.addSAPNoise(this->imageA, cover);
+  this->imageA = this->imageB = noiseImage;
+  this->setA(this->imageA);
+  this->setB(this->imageB);
+  updatePanel();
 }

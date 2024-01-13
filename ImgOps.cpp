@@ -2,6 +2,9 @@
 #include <QList>
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
 
 // ImgOps::ImgOps() {}
 
@@ -21,6 +24,158 @@ QPixmap ImgOps::path2pixmap(QString path) {
   }
   QPixmap pixmap = QPixmap::fromImage(image);
   return pixmap;
+}
+
+double ImgOps::calcPSNR(const QImage &image1, const QImage &image2) {
+  double mse = 0.0;
+
+  for (int y = 0; y < image1.height(); ++y) {
+    for (int x = 0; x < image1.width(); ++x) {
+      QRgb pixel1 = image1.pixel(x, y);
+      QRgb pixel2 = image2.pixel(x, y);
+
+      int r1 = qRed(pixel1);
+      int g1 = qGreen(pixel1);
+      int b1 = qBlue(pixel1);
+
+      int r2 = qRed(pixel2);
+      int g2 = qGreen(pixel2);
+      int b2 = qBlue(pixel2);
+
+      int dr = r1 - r2;
+      int dg = g1 - g2;
+      int db = b1 - b2;
+
+      mse += (dr * dr + dg * dg + db * db) / 3.0;
+    }
+  }
+
+  mse /= (image1.width() * image1.height());
+  double psnr = 10.0 * log10((255.0 * 255.0) / mse);
+
+  return psnr;
+}
+
+double ImgOps::calcSSIM(const QImage &image1, const QImage &image2) {
+  const double C1 = 6.5025;
+  const double C2 = 58.5225;
+
+  double mean1 = 0.0, mean2 = 0.0;
+  double var1 = 0.0, var2 = 0.0, covar = 0.0;
+
+  for (int y = 0; y < image1.height(); ++y) {
+    for (int x = 0; x < image1.width(); ++x) {
+      QRgb pixel1 = image1.pixel(x, y);
+      QRgb pixel2 = image2.pixel(x, y);
+
+      int r1 = qRed(pixel1);
+      int g1 = qGreen(pixel1);
+      int b1 = qBlue(pixel1);
+
+      int r2 = qRed(pixel2);
+      int g2 = qGreen(pixel2);
+      int b2 = qBlue(pixel2);
+
+      mean1 += r1 + g1 + b1;
+      mean2 += r2 + g2 + b2;
+      var1 += r1 * r1 + g1 * g1 + b1 * b1;
+      var2 += r2 * r2 + g2 * g2 + b2 * b2;
+      covar += r1 * r2 + g1 * g2 + b1 * b2;
+    }
+  }
+
+  int numPixels = image1.width() * image1.height();
+  mean1 /= (3.0 * numPixels);
+  mean2 /= (3.0 * numPixels);
+  var1 = (var1 - 3.0 * numPixels * mean1 * mean1) / (3.0 * numPixels - 1.0);
+  var2 = (var2 - 3.0 * numPixels * mean2 * mean2) / (3.0 * numPixels - 1.0);
+  covar = (covar - 3.0 * numPixels * mean1 * mean2) / (3.0 * numPixels - 1.0);
+
+  double ssim = ((2.0 * mean1 * mean2 + C1) * (2.0 * covar + C2)) /
+                ((mean1 * mean1 + mean2 * mean2 + C1) * (var1 + var2 + C2));
+
+  return ssim;
+}
+
+QImage ImgOps::addSAPNoise(const QImage &inputImage, float noiseRatio) {
+  QImage noisyImage = inputImage.copy();
+
+  int width = noisyImage.width();
+  int height = noisyImage.height();
+  int totalPixels = width * height;
+  int noisyPixels = static_cast<int>(totalPixels * noiseRatio);
+
+  // Generate random positions for noisy pixels
+  srand(static_cast<unsigned int>(time(nullptr)));
+
+  for (int i = 0; i < noisyPixels; ++i) {
+    int x = rand() % width;
+    int y = rand() % height;
+
+    // Set pixel to black or white randomly
+    int value = rand() % 2 ? 0 : 255;
+    noisyImage.setPixel(x, y, qRgb(value, value, value));
+  }
+
+  return noisyImage;
+}
+
+float generateRandomGaussian() {
+  static bool hasSpare = false;
+  static float spare;
+
+  if (hasSpare) {
+    hasSpare = false;
+    return spare;
+  }
+
+  hasSpare = true;
+  static float u, v, s;
+  do {
+    u = (rand() / static_cast<float>(RAND_MAX)) * 2.0f - 1.0f;
+    v = (rand() / static_cast<float>(RAND_MAX)) * 2.0f - 1.0f;
+    s = u * u + v * v;
+  } while (s >= 1.0 || s == 0.0);
+
+  s = std::sqrt(-2.0f * std::log(s) / s);
+  spare = v * s;
+
+  return u * s;
+}
+
+QImage ImgOps::addStdNoise(const QImage &inputImage, float mean, float stdDev) {
+  QImage noisyImage = inputImage.copy();
+
+  int width = noisyImage.width();
+  int height = noisyImage.height();
+
+  // Generate random noise for each pixel
+  srand(static_cast<unsigned int>(time(nullptr)));
+
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      // Get the pixel value
+      QRgb pixel = noisyImage.pixel(x, y);
+      int r = qRed(pixel);
+      int g = qGreen(pixel);
+      int b = qBlue(pixel);
+
+      // Generate random noise using Gaussian distribution
+      float noiseR = mean + stdDev * generateRandomGaussian();
+      float noiseG = mean + stdDev * generateRandomGaussian();
+      float noiseB = mean + stdDev * generateRandomGaussian();
+
+      // Add noise to the pixel value
+      r = qBound(0, static_cast<int>(r + noiseR), 255);
+      g = qBound(0, static_cast<int>(g + noiseG), 255);
+      b = qBound(0, static_cast<int>(b + noiseB), 255);
+
+      // Set the noisy pixel value
+      noisyImage.setPixel(x, y, qRgb(r, g, b));
+    }
+  }
+
+  return noisyImage;
 }
 
 QImage ImgOps::meanFilter(const QImage &image, int kernel_size) {
