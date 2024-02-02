@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
+    <width>803</width>
     <height>720</height>
    </rect>
   </property>
@@ -24,6 +24,13 @@
        <widget class="QPushButton" name="buttonOpenFile">
         <property name="text">
          <string>OpenFile</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonOpenFile_2">
+        <property name="text">
+         <string>SaveFile</string>
         </property>
        </widget>
       </item>
@@ -307,6 +314,16 @@
         </item>
         <item>
          <property name="text">
+          <string>形态学开运算</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>形态学闭运算</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>Prewitt算子</string>
          </property>
         </item>
@@ -454,7 +471,7 @@
         </sizepolicy>
        </property>
        <property name="title">
-        <string>Raw Image</string>
+        <string>Noised Image</string>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>

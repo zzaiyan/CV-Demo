@@ -5,6 +5,7 @@
 #include <QPixmap>
 #include <QtWidgets>
 
+
 #ifdef Q_OS_WIN
 #define DEFAULT_IMAGE_PATH "C:\\Users\\1\\Desktop\\template.png"
 #else
@@ -52,10 +53,10 @@ void StartWidget::applyTrans(QImage &inputImage) {
   int kernelSize = ui->kernelSizeBox->value();
   int repeatTime = ui->repeatTimeBox->value();
   int select = ui->comboBox->currentIndex();
-  if (select >= 4) {
+  if (select >= 6) {
     // 前4种为滤波器，后2种为边缘检测
     // 模4: 4->0, 5->1
-    kernelSize = select % 4;
+    kernelSize = select % 6;
   }
   auto trans = transList.at(select);
   while (repeatTime--) {
@@ -111,6 +112,12 @@ void StartWidget::on_buttonOpenFile_clicked() {
     this->setA(this->imageA);
     this->setB(this->imageB);
   }
+}
+
+void StartWidget::on_buttonOpenFile_2_clicked() {
+  QString filePath =
+      QFileDialog::getSaveFileName(nullptr, "保存文件", "", "图片文件 (*.png)");
+  ops.saveImage(this->imageB, filePath);
 }
 
 void StartWidget::on_buttonReset_clicked() {

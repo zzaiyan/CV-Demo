@@ -40,12 +40,15 @@ private slots:
   void on_buttonStdNoise_clicked();
   void on_buttonSAPNoise_clicked();
 
+  void on_buttonOpenFile_2_clicked();
+
 private:
   Ui::StartWidget *ui = new Ui::StartWidget;
   ImgOps ops;
   QImage rawImage, imageA, imageB;
   std::vector<ImgOps::FilterType> transList{
-      ops.meanFilter, ops.medianFilter,  ops.maxFilter,
-      ops.minFilter,  ops.edgeDetection, ops.edgeDetection};
+      ops.meanFilter,    ops.medianFilter,  ops.maxFilter,
+      ops.minFilter,     ops.openOperation, ops.closeOperation,
+      ops.edgeDetection, ops.edgeDetection};
 };
 #endif // STARTWIDGET_H

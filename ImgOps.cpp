@@ -26,6 +26,13 @@ QPixmap ImgOps::path2pixmap(QString path) {
   return pixmap;
 }
 
+void ImgOps::saveImage(const QImage &image, QString path) {
+  if (!(path.endsWith(".png") || path.endsWith("jpg")))
+    path = path + ".png";
+
+  image.save(path);
+}
+
 double ImgOps::calcPSNR(const QImage &image1, const QImage &image2) {
   double mse = 0.0;
 
@@ -228,9 +235,9 @@ QImage ImgOps::medianFilter(const QImage &image, int kernel_size) {
 
   for (int y = 0; y < image.height(); y += stride) {
     for (int x = 0; x < image.width(); x += stride) {
-      QList<int> redValues;
-      QList<int> greenValues;
-      QList<int> blueValues;
+      std::vector<int> redValues;
+      std::vector<int> greenValues;
+      std::vector<int> blueValues;
 
       // 遍历滤波器范围内的像素
       for (int j = -halfFilterSize; j <= halfFilterSize; ++j) {
@@ -242,9 +249,9 @@ QImage ImgOps::medianFilter(const QImage &image, int kernel_size) {
           if (neighborX >= 0 && neighborX < image.width() && neighborY >= 0 &&
               neighborY < image.height()) {
             QRgb neighborPixel = image.pixel(neighborX, neighborY);
-            redValues.append(qRed(neighborPixel));
-            greenValues.append(qGreen(neighborPixel));
-            blueValues.append(qBlue(neighborPixel));
+            redValues.push_back(qRed(neighborPixel));
+            greenValues.push_back(qGreen(neighborPixel));
+            blueValues.push_back(qBlue(neighborPixel));
           }
         }
       }
@@ -337,6 +344,20 @@ QImage ImgOps::minFilter(const QImage &image, int kernel_size) {
       filteredImage.setPixel(x, y, filteredPixel);
     }
   }
+
+  return filteredImage;
+}
+
+QImage ImgOps::openOperation(const QImage &image, int kernel_size) {
+  QImage filteredImage = minFilter(image, kernel_size);
+  filteredImage = maxFilter(filteredImage, kernel_size);
+
+  return filteredImage;
+}
+
+QImage ImgOps::closeOperation(const QImage &image, int kernel_size) {
+  QImage filteredImage = maxFilter(image, kernel_size);
+  filteredImage = minFilter(filteredImage, kernel_size);
 
   return filteredImage;
 }

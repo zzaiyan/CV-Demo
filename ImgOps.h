@@ -8,6 +8,7 @@
 #include <QtWidgets>
 #include <functional>
 
+
 class ImgOps {
 public:
   using FilterType = std::function<QImage(const QImage &, int)>;
@@ -15,7 +16,8 @@ public:
   // 读写文件
   static QImage path2image(QString path);
   static QPixmap path2pixmap(QString path);
-  static void saveImage(const QImage &image);
+  static void saveImage(const QImage &image, QString path);
+
   // 评估指标
   static double calcPSNR(const QImage &image1, const QImage &image2);
   static double calcSSIM(const QImage &image1, const QImage &image2);
@@ -28,6 +30,8 @@ public:
   static QImage medianFilter(const QImage &image, int kernel_size = 3);
   static QImage maxFilter(const QImage &image, int kernel_size = 3);
   static QImage minFilter(const QImage &image, int kernel_size = 3);
+  static QImage openOperation(const QImage &image, int kernel_size = 3);
+  static QImage closeOperation(const QImage &image, int kernel_size = 3);
   static QImage edgeDetection(const QImage &image, int mode = 0);
 };
 
